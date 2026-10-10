@@ -4,6 +4,7 @@ import { generateWithGemini } from "@/lib/gemini";
 import { generateLocalSystem, DEFAULT_GUIDELINES } from "@/lib/strategy";
 import { normalizePalette } from "@/lib/validate";
 import { sanitizeTypography } from "@/lib/fonts";
+import { sessionFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -12,6 +13,10 @@ export const maxDuration = 60;
 // لأن Next.js لا يسمح بتصدير أسماء إضافية من ملفات route.ts.
 
 export async function POST(req: Request) {
+  const session = await sessionFromRequest(req);
+  if (!session) return NextResponse.json({ error: "يلزم تسجيل الدخول" }, { status: 401 });
+  // حساب الديمو لا يستهلك رصيد نموذج الذكاء الاصطناعي المدفوع
+  if (session.r === "demo") return NextResponse.json({ error: "DEMO" }, { status: 403 });
   let body: { input?: IntakeInput; seed?: number };
   try {
     body = await req.json();

@@ -108,6 +108,9 @@ async function fetchAISystem(input: IntakeInput, seed: number): Promise<{ system
       signal: ctrl.signal,
     });
     clearTimeout(t);
+    if (res.status === 403) {
+      return { system: null, notes: [], notice: { kind: "info", text: "حساب الديمو يعمل بالمحرك المحلي الكامل. صياغة الهوية بالذكاء الاصطناعي (Gemini) متاحة لحساب الإدارة." } };
+    }
     if (res.status === 501) {
       return { system: null, notes: [], notice: { kind: "info", text: "تعمل الآن بالمحرك المحلي. أضف GEMINI_API_KEY لتفعيل صياغة الهوية بالذكاء الاصطناعي." } };
     }

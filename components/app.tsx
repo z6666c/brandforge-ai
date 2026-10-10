@@ -1,4 +1,5 @@
 "use client";
+import { AccountBar, DemoNotice } from "./account-bar";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useBrand } from "@/store/brand-store";
@@ -70,8 +71,10 @@ export default function BrandForgeApp() {
             BrandForge <span className="text-ember">AI</span>
           </div>
           <span className="hidden text-sm text-muted sm:inline">· مولّد الهويات البصرية والمطبوعات الذكية</span>
+          <div className="mr-auto"><AccountBar /></div>
         </div>
       </header>
+      <DemoNotice text="أنت في حساب الديمو: كل الأدوات متاحة بالمحرك المحلي، وصياغة Gemini المدفوعة متاحة لحساب الإدارة." />
       {mounted && (
         <AnimatePresence mode="wait">
           {showStudio ? (
