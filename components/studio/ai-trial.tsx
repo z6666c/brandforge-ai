@@ -7,17 +7,24 @@ import { useBrand } from "@/store/brand-store";
 import { aiTrialUrls, AI_TRIAL_NOTE } from "@/lib/ai-trial";
 import { Button, Card, SectionTitle } from "../ui/primitives";
 
-function TrialImg({ url, prompt }: { url: string; prompt: string }) {
-  const [state, setState] = React.useState<"loading" | "ok" | "error">("loading");
+function TrialImg({ url, prompt, turn, onDone }: { url: string; prompt: string; turn: boolean; onDone: () => void }) {
+  const [state, setState] = React.useState<"waiting" | "loading" | "ok" | "error">("waiting");
+  const [tries, setTries] = React.useState(0);
+  React.useEffect(() => { if (turn && state === "waiting") setState("loading"); }, [turn, state]);
+  const fail = () => {
+    // الخدمة المجانية ترفض الطلبات المتزامنة أحياناً: إعادة محاولة واحدة بعد ثوانٍ
+    if (tries < 1) { setTries(1); setState("waiting"); setTimeout(() => setState("loading"), 4000); return; }
+    setState("error"); onDone();
+  };
   return (
     <Card className="overflow-hidden">
       <div className="relative aspect-square bg-ink/[0.03]">
-        {state === "loading" && <div className="absolute inset-0 animate-pulse bg-ink/5" />}
-        {state === "error" ? (
+        {(state === "loading" || state === "waiting") && <div className="absolute inset-0 animate-pulse bg-ink/5" />}
+        {state === "waiting" ? null : state === "error" ? (
           <div className="flex h-full items-center justify-center p-4 text-center text-xs text-muted">تعذر الوصول لخدمة التجربة الآن</div>
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt={prompt} loading="lazy" onLoad={() => setState("ok")} onError={() => setState("error")} className="h-full w-full object-cover" />
+          <img src={tries ? `${url}&retry=1` : url} alt={prompt} loading="lazy" onLoad={() => { setState("ok"); onDone(); }} onError={fail} className="h-full w-full object-cover" />
         )}
         <span className="absolute top-2 right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-black">تجريبي</span>
       </div>
@@ -31,6 +38,7 @@ function TrialImg({ url, prompt }: { url: string; prompt: string }) {
 export function AiTrial({ identity }: { identity: BrandIdentity }) {
   const input = useBrand((s) => s.input);
   const [seed, setSeed] = React.useState<number | null>(null);
+  const [done, setDone] = React.useState(0);
   const p = identity.palette;
   const items = seed === null ? [] : aiTrialUrls({
     name: identity.metadata.brandName, nameEn: identity.metadata.brandNameEn, industry: input.industry, sub: input.industryOther,
@@ -42,13 +50,13 @@ export function AiTrial({ identity }: { identity: BrandIdentity }) {
         eyebrow="AI Lab · Beta"
         title="تجربة الذكاء الاصطناعي (تجريبي)"
         action={
-          <Button variant="outline" size="sm" onClick={() => setSeed(Math.floor(Math.random() * 900000))}>
+          <Button variant="outline" size="sm" onClick={() => { setDone(0); setSeed(Math.floor(Math.random() * 900000)); }}>
             {seed === null ? <FlaskConical className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />} {seed === null ? "ولّد أفكاراً" : "أفكار أخرى"}
           </Button>
         }
       />
       <p className="mb-4 text-[13px] leading-relaxed text-muted">{AI_TRIAL_NOTE} الشعار النهائي يبقى من المحرك المتجهي أعلاه.</p>
-      {items.length > 0 && <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{items.map((it) => <TrialImg key={it.url} {...it} />)}</div>}
+      {items.length > 0 && <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{items.map((it, i) => <TrialImg key={it.url} {...it} turn={i <= done} onDone={() => setDone((d) => Math.max(d, i + 1))} />)}</div>}
     </section>
   );
 }
