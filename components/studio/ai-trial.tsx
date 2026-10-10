@@ -4,7 +4,7 @@ import * as React from "react";
 import { FlaskConical, RefreshCw } from "lucide-react";
 import type { BrandIdentity } from "@/lib/types";
 import { useBrand } from "@/store/brand-store";
-import { aiTrialUrls, AI_TRIAL_NOTE } from "@/lib/ai-trial";
+import { aiTrialUrls, AI_TRIAL_NOTE, nameIdeas } from "@/lib/ai-trial";
 import { Button, Card, SectionTitle } from "../ui/primitives";
 
 function TrialImg({ url, prompt, turn, onDone }: { url: string; prompt: string; turn: boolean; onDone: () => void }) {
@@ -43,6 +43,7 @@ export function AiTrial({ identity }: { identity: BrandIdentity }) {
   const items = seed === null ? [] : aiTrialUrls({
     name: identity.metadata.brandName, nameEn: identity.metadata.brandNameEn, industry: input.industry, sub: input.industryOther,
     style: input.visualStyle, colors: [p.primary.hex, p.secondary.hex, p.accent.hex],
+    ideas: nameIdeas(identity.metadata.brandName, identity.metadata.brandNameEn),
   }, seed);
   return (
     <section className="rounded-2xl border border-dashed border-amber-400/70 bg-amber-50/40 p-5">
