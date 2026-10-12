@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles, Check } from "lucide-react";
 import { useBrand } from "@/store/brand-store";
 import { COLOR_PREFS, INDUSTRIES, STYLES, VALUES } from "@/lib/labels";
+import { NameCheckPanel } from "../name-check-panel";
 import { normalizeHex } from "@/lib/color";
 import type { VisualStyle } from "@/lib/types";
 import { Button, Chip, cn, Input, Label, Textarea } from "../ui/primitives";
@@ -131,6 +132,12 @@ export function IntakeWizard() {
                       <Input className="mt-3" value={input.industryOther ?? ""} onChange={(e) => setInput({ industryOther: e.target.value })} placeholder="اكتب القطاع" />
                     )}
                   </div>
+                  <NameCheckPanel
+                    name={input.brandName}
+                    nameEn={input.brandNameEn}
+                    activity={input.industry === "other" ? input.industryOther || "نشاط تجاري" : INDUSTRIES.find((i) => i.id === input.industry)?.label ?? ""}
+                    onPick={(n) => (/[a-z]/i.test(n) && !/[\u0600-\u06FF]/.test(n) ? setInput({ brandNameEn: n }) : setInput({ brandName: n }))}
+                  />
                 </>
               )}
 
