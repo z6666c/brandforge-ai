@@ -1,5 +1,8 @@
 "use client";
-import { daysLeft, ensureAccount, isCustomer, useAccount } from "../account/account-client";
+import { daysLeft, ensureAccount, useAccount, useEntitled } from "../account/account-client";
+import { Watermark, PreviewBadge } from "../account/watermark";
+import { paidGate } from "./paid-gate";
+import { PLANS } from "@/lib/plans";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, FileArchive, Info, TriangleAlert, X, Layers, PenTool, Printer, Box, Save, SlidersHorizontal } from "lucide-react";
@@ -52,6 +55,7 @@ export function Studio() {
   const invoice = useBrand((s) => s.invoice);
   const { me } = useAccount();
   const customer = me?.role === "customer";
+  const paid = useEntitled(saved?.id);
 
   // حفظ تلقائي بعد كل تعديل (للعميل المسجّل الذي حفظ التصميم مرة)
   React.useEffect(() => {
@@ -63,12 +67,10 @@ export function Studio() {
 
   const saveNow = async () => {
     if (!(await ensureAccount("لحفظ هويتك والرجوع لها لاحقاً."))) return;
-    if (await save()) setNotice({ kind: "info", text: `تم الحفظ في حسابك — يبقى التصميم متاحاً ${daysLeft(useBrand.getState().saved?.expiresAt) ?? "∞"} يوماً.` });
+    if (await save()) setNotice({ kind: "info", text: paid ? "تم الحفظ في حسابك." : `تم حفظ المسودة في حسابك — أكمل الشراء خلال ${daysLeft(useBrand.getState().saved?.expiresAt) ?? 7} أيام لتحميل الملفات.` });
   };
 
   const zip = async () => {
-    if (!(await ensureAccount("لتحميل حزمة الهوية الكاملة."))) return;
-    if (isCustomer()) await save(true);
     setBusy(true);
     try {
       const w = await exportPackage();
@@ -103,7 +105,7 @@ export function Studio() {
               <Button variant="ghost" size="sm" onClick={back}><ArrowRight className="h-4 w-4" /> المعالج</Button>
               <Button variant="outline" size="sm" onClick={saveNow} disabled={saveState === "saving"}>
                 <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">{saveState === "saving" ? "يحفظ…" : saved && customer ? `محفوظ · ${daysLeft(saved.expiresAt) ?? "∞"} يوماً` : "احفظ تصميمي"}</span>
+                <span className="hidden sm:inline">{saveState === "saving" ? "يحفظ…" : saved && customer ? (paid ? "محفوظ ✓" : "مسودة محفوظة") : "احفظ تصميمي"}</span>
               </Button>
               <Button variant="ember" size="sm" onClick={zip} disabled={busy}><FileArchive className="h-4 w-4" /> <span className="hidden sm:inline">الحزمة الكاملة</span> ZIP</Button>
             </div>
@@ -121,7 +123,9 @@ export function Studio() {
             ))}
           </div>
         </div>
-        <div className="mx-auto max-w-6xl px-5 py-7">
+        <div className="relative mx-auto max-w-6xl px-5 py-7">
+          <Watermark show={!paid} text="معاينة · BrandForge" />
+          <PreviewBadge show={!paid} label={`التحميل بعد الدفع: ${PLANS.once.price} ${PLANS.once.currency} مرة واحدة أو ${PLANS.monthly.price} شهرياً`} onUnlock={() => { paidGate("لتحميل ملفات هويتك."); }} />
           <NoticeBar />
           <AnimatePresence mode="wait">
             <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>

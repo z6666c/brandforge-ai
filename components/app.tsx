@@ -79,7 +79,7 @@ export default function BrandForgeApp() {
           <div className="mr-auto"><AccountBar /></div>
         </div>
       </header>
-      <DemoNotice text="أنت في الديمو: جرّب كل شيء مجاناً، وسجّل ببريدك أو جوالك ليبقى تصميمك محفوظاً 30 يوماً." />
+      <DemoNotice text="أنت في الديمو: المعاينة مجانية بعلامة مائية، والتحميل بعد اختيار الباقة." />
       {mounted && (
         <AnimatePresence mode="wait">
           {showStudio ? (

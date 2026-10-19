@@ -1,4 +1,5 @@
 "use client";
+import { paidGate } from "./paid-gate";
 import * as React from "react";
 import { motion } from "framer-motion";
 import { Check, Download, Plus, RefreshCw, WandSparkles } from "lucide-react";
@@ -13,7 +14,8 @@ import { useLockup } from "../hooks";
 import { Button, Card, cn, SectionTitle, SvgBox } from "../ui/primitives";
 import { exportNodePng } from "./exporter";
 
-function downloadSvg(name: string, svg: string) {
+async function downloadSvg(name: string, svg: string) {
+  if (!(await paidGate("لتحميل ملفات الشعار."))) return;
   downloadBlob(new Blob([`<?xml version="1.0" encoding="UTF-8"?>\n${svg}`], { type: "image/svg+xml" }), name);
 }
 
@@ -106,6 +108,7 @@ export function LogosTab() {
   const mono = useLockup(identity, "horizontal", "mono-dark");
   const white = useLockup(identity, "horizontal", "mono-light");
   const downloadAllSvg = async () => {
+    if (!(await paidGate("لتحميل ملفات الشعار."))) return;
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
     Object.entries(logoFiles(identity)).forEach(([f, svg]) => zip.file(f, `<?xml version="1.0" encoding="UTF-8"?>\n${svg}`));

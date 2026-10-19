@@ -1,5 +1,6 @@
 "use client";
 // منصة التصدير الخفية: تُركّب كل المطبوعات بمقاسها الحقيقي خارج الشاشة ثم تحوّلها إلى ملفات
+import { paidGate } from "./paid-gate";
 import * as React from "react";
 import { create } from "zustand";
 import { useBrand } from "@/store/brand-store";
@@ -50,6 +51,7 @@ async function withStage<T>(label: string, job: (getNode: GetNode) => Promise<T>
 const SPECS = PRINT_SPECS as unknown as Record<string, { w: number; h: number; bleed: number }>;
 
 export async function exportPdf(job: PdfJobId) {
+  if (!(await paidGate("لتحميل المطبوعات PDF."))) return;
   const { identity } = useBrand.getState();
   if (!identity) return;
   const { file, bytes } = await withStage("تجهيز ملف PDF", (getNode) =>
@@ -59,6 +61,7 @@ export async function exportPdf(job: PdfJobId) {
 }
 
 export async function exportPackage(): Promise<string[]> {
+  if (!(await paidGate("لتحميل حزمة الهوية الكاملة."))) return [];
   const { identity, contact, invoice } = useBrand.getState();
   if (!identity) return [];
   const res = await withStage("تجهيز الحزمة الكاملة", (getNode) =>
@@ -72,6 +75,7 @@ export async function exportPackage(): Promise<string[]> {
 }
 
 export async function exportNodePng(id: string, filename: string, width = 2048) {
+  if (!(await paidGate("لتحميل الصور بدقة عالية."))) return;
   const { identity } = useBrand.getState();
   if (!identity) return;
   const { rasterize, canvasToBlob } = await import("@/lib/export/raster");
