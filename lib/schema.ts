@@ -75,6 +75,9 @@ export function buildBrandPrompt(input: IntakeInput, seed: number): string {
 - النمط البصري: ${label.style(input.visualStyle)}
 - الفئة المستهدفة: ${input.targetAudience || "—"}
 - تفضيل الألوان: ${input.colorPreference === "custom" ? `مخصص حول اللون ${input.customColor}` : input.colorPreference}
+- نوع الشعار المفضل: ${input.logoTypes?.join("، ") || "—"}
+- عناصر يحب رؤيتها: ${input.likes || "—"}
+- عناصر يتجنبها: ${input.avoid || "—"}
 
 قواعد إلزامية:
 1. brandStory: فقرة عربية فصيحة وبليغة (70–110 كلمة) تشرح فلسفة الهوية ودلالة الألوان والأسلوب، دون مبالغات فارغة.

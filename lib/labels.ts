@@ -41,3 +41,11 @@ export const label = {
   value: (id: string) => VALUES.find((v) => v.id === id)?.label ?? id,
   style: (id: string) => STYLES.find((s) => s.id === id)?.label ?? id,
 };
+
+export const LOGO_KINDS: { id: import("./types").LogoKind; label: string; hint: string }[] = [
+  { id: "symbol", label: "رمز مجرد", hint: "شكل هندسي يعبّر عن الفكرة" },
+  { id: "pictorial", label: "رمز تصويري", hint: "عنصر من النشاط أو معنى الاسم" },
+  { id: "lettermark", label: "حرف / مونوغرام", hint: "الحرف الأول أو حرفان" },
+  { id: "combo", label: "رمز + حرف", hint: "دمج الحرف مع عنصر" },
+  { id: "emblem", label: "ختم / شارة", hint: "إطار دائري أو شعار كلاسيكي" },
+];

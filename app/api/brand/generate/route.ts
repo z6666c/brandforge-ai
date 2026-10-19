@@ -5,6 +5,7 @@ import { generateLocalSystem, DEFAULT_GUIDELINES } from "@/lib/strategy";
 import { normalizePalette } from "@/lib/validate";
 import { sanitizeTypography } from "@/lib/fonts";
 import { sessionFromRequest } from "@/lib/auth";
+import { clientIp, demoAiAllowed, rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -16,7 +17,10 @@ export async function POST(req: Request) {
   const session = await sessionFromRequest(req);
   if (!session) return NextResponse.json({ error: "يلزم تسجيل الدخول" }, { status: 401 });
   // حساب الديمو لا يستهلك رصيد نموذج الذكاء الاصطناعي المدفوع
-  if (session.r === "demo") return NextResponse.json({ error: "DEMO" }, { status: 403 });
+  if (session.r === "demo" && !demoAiAllowed()) return NextResponse.json({ error: "DEMO" }, { status: 403 });
+  if (session.r === "demo" && !rateLimit(`brand-ai:${clientIp(req)}`, Number(process.env.DEMO_AI_IDENTITIES_PER_HOUR || 5))) {
+    return NextResponse.json({ error: "DEMO_LIMIT" }, { status: 403 });
+  }
   let body: { input?: IntakeInput; seed?: number };
   try {
     body = await req.json();

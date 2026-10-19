@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
-  BrandIdentity, BrandSystemAI, ContactInfo, IntakeInput, InvoiceData, InvoiceItem, PaletteKey, Typography,
+  BrandIdentity, BrandSystemAI, ContactInfo, IntakeInput, InvoiceData, InvoiceItem, LogoConcept, Palette, PaletteKey, Typography,
 } from "@/lib/types";
 import { freshSeed, uid } from "@/lib/random";
 import { generateConcepts } from "@/lib/logo";
@@ -23,6 +23,10 @@ export const DEFAULT_INPUT: IntakeInput = {
   targetAudience: "",
   colorPreference: "cool",
   customColor: "#1F6F78",
+  logoTypes: [],
+  likes: "",
+  avoid: "",
+  aiDirect: true,
 };
 
 const slugify = (s?: string) =>
@@ -78,6 +82,9 @@ interface BrandState {
   regenerateConcepts: () => void;
   moreConcepts: () => void;
   seenSigs: string[];
+  loadingStage: "ai-logos" | null;
+  aiBusy: boolean;
+  moreAiLogos: () => Promise<void>;
   selectConcept: (i: number) => void;
   setTab: (t: StudioTab) => void;
   backToWizard: () => void;
@@ -92,6 +99,22 @@ interface BrandState {
   removeItem: (id: string) => void;
   setNotice: (n: Notice | null) => void;
   toggleGuides: () => void;
+}
+
+/** شعارات يرسمها الذكاء الاصطناعي مباشرة (Recraft أو Gemini) */
+export async function fetchAILogos(input: IntakeInput, palette: Palette, count = 4): Promise<{ concepts: LogoConcept[]; error?: string }> {
+  if (process.env.NEXT_PUBLIC_BRANDFORGE_DEMO === "1") return { concepts: [], error: "PREVIEW" };
+  try {
+    const res = await fetch("/api/brand/ai-logos", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input, palette, count }), signal: AbortSignal.timeout(95_000),
+    });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) return { concepts: [], error: res.status === 501 ? "NO_KEY" : d.error ?? String(res.status) };
+    return { concepts: (d.concepts ?? []) as LogoConcept[] };
+  } catch {
+    return { concepts: [], error: "تعذر الاتصال بمولّد الشعارات" };
+  }
 }
 
 async function fetchAISystem(input: IntakeInput, seed: number): Promise<{ system: BrandSystemAI | null; notice: Notice | null; notes: string[] }> {
@@ -109,7 +132,8 @@ async function fetchAISystem(input: IntakeInput, seed: number): Promise<{ system
     });
     clearTimeout(t);
     if (res.status === 403) {
-      return { system: null, notes: [], notice: { kind: "info", text: "حساب الديمو يعمل بالمحرك المحلي الكامل. صياغة الهوية بالذكاء الاصطناعي (Gemini) متاحة لحساب الإدارة." } };
+      const d = await res.json().catch(() => ({}));
+      return { system: null, notes: [], notice: { kind: "info", text: d.error === "DEMO_LIMIT" ? "وصلت لحد التجربة بالذكاء الاصطناعي لهذه الساعة، فاستُخدم المحرك المحلي." : "حساب الديمو يعمل بالمحرك المحلي الكامل. صياغة الهوية بالذكاء الاصطناعي متاحة لحساب الإدارة." } };
     }
     if (res.status === 501) {
       return { system: null, notes: [], notice: { kind: "info", text: "تعمل الآن بالمحرك المحلي. أضف GEMINI_API_KEY لتفعيل صياغة الهوية بالذكاء الاصطناعي." } };
@@ -138,6 +162,17 @@ export const useBrand = create<BrandState>()(
       validationNotes: [],
       showGuides: true,
       seenSigs: [],
+      loadingStage: null,
+      aiBusy: false,
+      moreAiLogos: async () => {
+        const { identity, input } = get();
+        if (!identity || get().aiBusy) return;
+        set({ aiBusy: true });
+        const ai = await fetchAILogos(input, identity.palette, 4);
+        const cur = get().identity;
+        if (ai.concepts.length && cur) set({ identity: { ...cur, concepts: [...ai.concepts, ...cur.concepts].slice(0, 48), selectedConcept: 0 }, aiBusy: false });
+        else set({ aiBusy: false, notice: { kind: ai.error === "NO_KEY" ? "info" : "warn", text: ai.error === "NO_KEY" ? "الرسم بالذكاء الاصطناعي يحتاج RECRAFT_API_KEY أو GEMINI_API_KEY في إعدادات الخادم." : ai.error === "PREVIEW" ? "الرسم بالذكاء الاصطناعي يعمل في الموقع المنشور فقط، وليس في المعاينة." : `تعذر الرسم بالذكاء الاصطناعي: ${ai.error}` } });
+      },
 
       setInput: (patch) => set({ input: { ...get().input, ...patch } }),
 
@@ -150,12 +185,20 @@ export const useBrand = create<BrandState>()(
         const concepts = generateConcepts(input, seed);
         const { system, notice, notes } = await fetchAISystem(input, seed);
         const finalSystem = system ?? generateLocalSystem(input, seed);
-        const identity = assembleIdentity(input, finalSystem, concepts, seed, system ? "ai" : "local");
+        let identity = assembleIdentity(input, finalSystem, concepts, seed, system ? "ai" : "local");
+        // التوليد المباشر: الذكاء الاصطناعي يرسم الشعارات بألوان الهوية، وتظهر أولاً قبل بدائل المحرك
+        let aiNotice: Notice | null = null;
+        if (input.aiDirect !== false) {
+          set({ loadingStage: "ai-logos" });
+          const ai = await fetchAILogos(input, identity.palette, 4);
+          if (ai.concepts.length) identity = { ...identity, concepts: [...ai.concepts, ...identity.concepts], selectedConcept: 0 };
+          else if (ai.error && ai.error !== "PREVIEW" && ai.error !== "NO_KEY") aiNotice = { kind: "warn", text: `تعذر رسم الشعارات بالذكاء الاصطناعي الآن (${ai.error})؛ عرضنا شعارات المحرك.` };
+        }
         const wait = Math.max(0, 2200 - (Date.now() - started)); // يمنح شاشة التحميل وقتاً لعرض المراحل
         await new Promise((r) => setTimeout(r, wait));
         const prev = get().contact;
         const contact = prev.email.startsWith("info@brand") || !get().identity ? defaultContact(input) : prev;
-        set({ identity, contact, loading: false, notice, validationNotes: notes, stage: "studio", tab: "strategy" });
+        set({ identity, contact, loading: false, loadingStage: null, notice: notice ?? aiNotice, validationNotes: notes, stage: "studio", tab: "strategy" });
       },
 
       regenerateConcepts: () => {
@@ -164,7 +207,7 @@ export const useBrand = create<BrandState>()(
         const seed = freshSeed(identity.id);
         const seen = [...get().seenSigs, ...identity.concepts.map((c) => c.signature ?? "")].slice(-400);
         const concepts = generateConcepts(input, seed, identity.concepts.map((c) => c.family), 6, seen);
-        set({ identity: { ...identity, concepts, selectedConcept: 0 }, seenSigs: seen });
+        set({ identity: { ...identity, concepts: [...identity.concepts.filter((c) => c.ai), ...concepts], selectedConcept: 0 }, seenSigs: seen });
       },
       moreConcepts: () => {
         const { identity, input } = get();
@@ -173,7 +216,8 @@ export const useBrand = create<BrandState>()(
         const seen = [...get().seenSigs, ...identity.concepts.map((c) => c.signature ?? "")];
         const fams = identity.concepts.slice(-6).map((c) => c.family);
         const extra = generateConcepts(input, seed, fams, 6, seen);
-        set({ identity: { ...identity, concepts: [...identity.concepts, ...extra].slice(-36) } });
+        const ai = identity.concepts.filter((c) => c.ai), local = identity.concepts.filter((c) => !c.ai);
+        set({ identity: { ...identity, concepts: [...ai, ...[...local, ...extra].slice(-36)] } });
       },
 
       selectConcept: (i) => {

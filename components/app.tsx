@@ -22,6 +22,7 @@ const FORGE_STEPS = ["تحليل مدخلات العلامة", "صياغة ال�
 
 function ForgeLoader() {
   const name = useBrand((s) => s.input.brandName);
+  const stage = useBrand((s) => s.loadingStage);
   const [i, setI] = React.useState(0);
   React.useEffect(() => {
     const t = setInterval(() => setI((x) => Math.min(FORGE_STEPS.length - 1, x + 1)), 520);
@@ -42,6 +43,9 @@ function ForgeLoader() {
         </div>
         <div className="mb-1 font-display text-2xl font-bold">نصوغ هوية «{name}»</div>
         <div className="mb-6 text-sm text-muted">بذرة تفرد جديدة لكل طلب — لا تتكرر النتائج</div>
+        {stage === "ai-logos" && (
+          <div className="mb-4 rounded-xl bg-ember/10 px-3 py-2 text-sm font-medium text-ember-deep">الذكاء الاصطناعي يرسم شعاراتك الآن من اسمك ونشاطك واختياراتك…</div>
+        )}
         <div className="space-y-2 text-right">
           {FORGE_STEPS.map((s, k) => (
             <div key={s} className={`flex items-center gap-3 text-sm transition ${k <= i ? "text-ink" : "text-muted/50"}`}>

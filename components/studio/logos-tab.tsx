@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Check, Download, Plus, RefreshCw } from "lucide-react";
+import { Check, Download, Plus, RefreshCw, WandSparkles } from "lucide-react";
 import { useBrand } from "@/store/brand-store";
 import { iconSvg, faviconSvg, symbolInner, colorsOf } from "@/lib/logo/render";
 import { FAMILY_LABEL, compositionSpace } from "@/lib/logo";
@@ -91,6 +91,9 @@ export function LogosTab() {
   const identity = useBrand((s) => s.identity)!;
   const regenerate = useBrand((s) => s.regenerateConcepts);
   const more = useBrand((s) => s.moreConcepts);
+  const moreAi = useBrand((s) => s.moreAiLogos);
+  const aiBusy = useBrand((s) => s.aiBusy);
+  const aiCount = identity.concepts.filter((x) => x.ai).length;
   const input = useBrand((s) => s.input);
   const space = React.useMemo(
     () => compositionSpace(readName(identity.metadata.brandName, identity.metadata.brandNameEn, input.industry, input.industryOther)),
@@ -118,7 +121,10 @@ export function LogosTab() {
           eyebrow="Logomark Engine"
           title="مفاهيم تقرأ اسمك ونشاطك — اختر الأنسب"
           action={
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ember" size="sm" onClick={() => moreAi()} disabled={aiBusy}>
+                <WandSparkles className="h-4 w-4" /> {aiBusy ? "يرسم الذكاء الاصطناعي…" : "ارسم بالذكاء الاصطناعي"}
+              </Button>
               <Button variant="outline" size="sm" onClick={regenerate}>
                 <RefreshCw className="h-4 w-4" /> مفاهيم جديدة
               </Button>
@@ -129,7 +135,8 @@ export function LogosTab() {
           }
         />
         <p className="-mt-2 mb-4 text-[13px] text-muted">
-          يقرأ المحرك اسمك ونوع نشاطك ويركّب كل شعار لحظة الطلب — <b className="text-ink">{space.toLocaleString("ar-SA")}</b> تركيبة مختلفة ممكنة لعلامتك، ولا يُعاد عرض تصميم سبق ظهوره.
+          {aiCount > 0 && <>رسم الذكاء الاصطناعي <b className="text-ink">{aiCount.toLocaleString("ar-SA")}</b> شعاراً من اسمك ونشاطك واختياراتك. </>}
+          ويضيف المحرك بدائل فورية — <b className="text-ink">{space.toLocaleString("ar-SA")}</b> تركيبة ممكنة لعلامتك بلا تكرار.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {identity.concepts.map((_, i) => <ConceptCard key={identity.concepts[i].id + i} i={i} />)}

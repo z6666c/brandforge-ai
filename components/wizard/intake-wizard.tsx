@@ -4,7 +4,7 @@ import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Sparkles, Check } from "lucide-react";
 import { useBrand } from "@/store/brand-store";
-import { COLOR_PREFS, INDUSTRIES, STYLES, VALUES } from "@/lib/labels";
+import { COLOR_PREFS, INDUSTRIES, LOGO_KINDS, STYLES, VALUES } from "@/lib/labels";
 import { NameCheckPanel } from "../name-check-panel";
 import { normalizeHex } from "@/lib/color";
 import type { VisualStyle } from "@/lib/types";
@@ -190,6 +190,36 @@ export function IntakeWizard() {
                     <Label hint="اختياري">الفئة المستهدفة</Label>
                     <Textarea rows={2} value={input.targetAudience} onChange={(e) => setInput({ targetAudience: e.target.value })} placeholder="مثال: الشركات الناشئة ورواد الأعمال في الخليج" />
                   </div>
+                  <div>
+                    <Label hint="اختر واحداً أو أكثر">نوع الشعار</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {LOGO_KINDS.map((k) => {
+                        const on = input.logoTypes?.includes(k.id) ?? false;
+                        return (
+                          <Chip key={k.id} active={on} onClick={() => setInput({ logoTypes: on ? (input.logoTypes ?? []).filter((x) => x !== k.id) : [...(input.logoTypes ?? []), k.id] })}>
+                            {k.label}
+                          </Chip>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label hint="اختياري">عناصر تحب تشوفها</Label>
+                      <Input value={input.likes ?? ""} onChange={(e) => setInput({ likes: e.target.value })} placeholder="مثال: نخلة، خطوط ناعمة" maxLength={80} />
+                    </div>
+                    <div>
+                      <Label hint="اختياري">عناصر تتجنبها</Label>
+                      <Input value={input.avoid ?? ""} onChange={(e) => setInput({ avoid: e.target.value })} placeholder="مثال: فنجان، ألوان صارخة" maxLength={80} />
+                    </div>
+                  </div>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-white/60 p-3">
+                    <input type="checkbox" className="mt-1 accent-ember" checked={input.aiDirect !== false} onChange={(e) => setInput({ aiDirect: e.target.checked })} />
+                    <span>
+                      <span className="block text-sm font-semibold">رسم الشعارات مباشرة بالذكاء الاصطناعي</span>
+                      <span className="block text-xs text-muted">يرسم الذكاء الاصطناعي شعارات متجهية (SVG) من الاسم ومعناه والنشاط واختياراتك، ويضيف المحرك بدائل إضافية.</span>
+                    </span>
+                  </label>
                 </>
               )}
 
