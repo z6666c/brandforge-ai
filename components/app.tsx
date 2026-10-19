@@ -1,4 +1,5 @@
 "use client";
+import { AccountModals } from "./account/account-modals";
 import { AccountBar, DemoNotice } from "./account-bar";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -78,7 +79,7 @@ export default function BrandForgeApp() {
           <div className="mr-auto"><AccountBar /></div>
         </div>
       </header>
-      <DemoNotice text="أنت في حساب الديمو: كل الأدوات متاحة بالمحرك المحلي، وصياغة Gemini المدفوعة متاحة لحساب الإدارة." />
+      <DemoNotice text="أنت في الديمو: جرّب كل شيء مجاناً، وسجّل ببريدك أو جوالك ليبقى تصميمك محفوظاً 30 يوماً." />
       {mounted && (
         <AnimatePresence mode="wait">
           {showStudio ? (
@@ -93,6 +94,10 @@ export default function BrandForgeApp() {
         </AnimatePresence>
       )}
       <AnimatePresence>{loading && <ForgeLoader key="loader" />}</AnimatePresence>
+      <AccountModals onOpenDesign={async (d) => {
+        try { await useBrand.getState().loadSaved(d.id); }
+        catch (e) { useBrand.getState().setNotice({ kind: "error", text: (e as Error).message }); }
+      }} />
       <ExportStage />
       <ExportOverlay />
     </div>

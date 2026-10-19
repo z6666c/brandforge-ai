@@ -5,12 +5,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const out = path.join(root, "demo/dist");
+const out = path.join(root, process.env.DEMO_OUT || "demo/dist");
 fs.mkdirSync(out, { recursive: true });
 const NM = "/opt/npm-tools/node_modules";
 
 const res = await build({
-  entryPoints: [path.join(root, "demo/main.tsx")],
+  entryPoints: [path.join(root, process.env.DEMO_ENTRY || "demo/main.tsx")],
   bundle: true, format: "iife", minify: true, write: false, target: "es2020", jsx: "automatic",
   nodePaths: [NM],
   alias: {
@@ -20,7 +20,7 @@ const res = await build({
     "framer-motion": path.join(root, "demo/shims/framer-motion.tsx"),
     "lucide-react": path.join(root, "demo/shims/lucide.ts"),
   },
-  define: { "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_BRANDFORGE_DEMO": '"1"' },
+  define: { "process.env.NODE_ENV": '"production"', "process.env.NEXT_PUBLIC_BRANDFORGE_DEMO": JSON.stringify(process.env.PREVIEW_FLAG ?? "1") },
   logLevel: "warning",
 });
 const js = res.outputFiles[0].text;

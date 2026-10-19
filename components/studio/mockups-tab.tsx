@@ -1,4 +1,5 @@
 "use client";
+import { ensureAccount, isCustomer } from "../account/account-client";
 import * as React from "react";
 import { Download, FileArchive, FileText, Image as ImageIcon, PenTool, Braces } from "lucide-react";
 import { useBrand } from "@/store/brand-store";
@@ -17,6 +18,8 @@ export function MockupsTab() {
   const S = SCENES.find((s) => s.id === scene)!.C;
 
   const downloadZip = async () => {
+    if (!(await ensureAccount("لتحميل حزمة الهوية الكاملة."))) return;
+    if (isCustomer()) await useBrand.getState().saveToAccount(true);
     setBusy(true);
     try {
       const warnings = await exportPackage();

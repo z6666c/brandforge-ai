@@ -1,7 +1,8 @@
 "use client";
+import { daysLeft, ensureAccount, isCustomer, useAccount } from "../account/account-client";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, FileArchive, Info, TriangleAlert, X, Layers, PenTool, Printer, Box, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, FileArchive, Info, TriangleAlert, X, Layers, PenTool, Printer, Box, Save, SlidersHorizontal } from "lucide-react";
 import { useBrand, selectedConcept, type StudioTab } from "@/store/brand-store";
 import { symbolInner, colorsOf, setSymbolTypography } from "@/lib/logo/render";
 import { fontStack } from "@/lib/fonts";
@@ -44,8 +45,30 @@ export function Studio() {
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const c = selectedConcept(identity);
+  const saved = useBrand((s) => s.saved);
+  const saveState = useBrand((s) => s.saveState);
+  const save = useBrand((s) => s.saveToAccount);
+  const contact = useBrand((s) => s.contact);
+  const invoice = useBrand((s) => s.invoice);
+  const { me } = useAccount();
+  const customer = me?.role === "customer";
+
+  // حفظ تلقائي بعد كل تعديل (للعميل المسجّل الذي حفظ التصميم مرة)
+  React.useEffect(() => {
+    if (!customer || !saved) return;
+    const t = setTimeout(() => { save(true); }, 4000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [identity, contact, invoice, customer]);
+
+  const saveNow = async () => {
+    if (!(await ensureAccount("لحفظ هويتك والرجوع لها لاحقاً."))) return;
+    if (await save()) setNotice({ kind: "info", text: `تم الحفظ في حسابك — يبقى التصميم متاحاً ${daysLeft(useBrand.getState().saved?.expiresAt) ?? "∞"} يوماً.` });
+  };
 
   const zip = async () => {
+    if (!(await ensureAccount("لتحميل حزمة الهوية الكاملة."))) return;
+    if (isCustomer()) await save(true);
     setBusy(true);
     try {
       const w = await exportPackage();
@@ -78,6 +101,10 @@ export function Studio() {
             <div className="ms-auto flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setEditorOpen(true)} className="lg:hidden"><SlidersHorizontal className="h-4 w-4" /> تعديل</Button>
               <Button variant="ghost" size="sm" onClick={back}><ArrowRight className="h-4 w-4" /> المعالج</Button>
+              <Button variant="outline" size="sm" onClick={saveNow} disabled={saveState === "saving"}>
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">{saveState === "saving" ? "يحفظ…" : saved && customer ? `محفوظ · ${daysLeft(saved.expiresAt) ?? "∞"} يوماً` : "احفظ تصميمي"}</span>
+              </Button>
               <Button variant="ember" size="sm" onClick={zip} disabled={busy}><FileArchive className="h-4 w-4" /> <span className="hidden sm:inline">الحزمة الكاملة</span> ZIP</Button>
             </div>
           </div>

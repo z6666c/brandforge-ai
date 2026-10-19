@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { stat } from "@/lib/customers";
 import type { BrandSystemAI, IntakeInput } from "@/lib/types";
 import { generateWithGemini } from "@/lib/gemini";
 import { generateLocalSystem, DEFAULT_GUIDELINES } from "@/lib/strategy";
@@ -51,6 +52,7 @@ export async function POST(req: Request) {
         donts: Array.isArray(ai.guidelines?.donts) && ai.guidelines.donts.length >= 3 ? ai.guidelines.donts.slice(0, 6) : DEFAULT_GUIDELINES.donts,
       },
     };
+    await stat("ai_identity");
     return NextResponse.json({ system, notes, model: process.env.GEMINI_MODEL || "gemini-3.8-flash" });
   } catch (e) {
     const message = e instanceof Error ? e.message : "خطأ غير معروف";

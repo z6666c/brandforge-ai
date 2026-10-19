@@ -85,6 +85,11 @@ interface BrandState {
   loadingStage: "ai-logos" | null;
   aiBusy: boolean;
   moreAiLogos: () => Promise<void>;
+  /** التصميم المحفوظ في حساب العميل */
+  saved: { id: string; expiresAt: number | null; at: number } | null;
+  saveState: "idle" | "saving" | "error";
+  saveToAccount: (silent?: boolean) => Promise<boolean>;
+  loadSaved: (id: string) => Promise<void>;
   selectConcept: (i: number) => void;
   setTab: (t: StudioTab) => void;
   backToWizard: () => void;
@@ -163,6 +168,27 @@ export const useBrand = create<BrandState>()(
       showGuides: true,
       seenSigs: [],
       loadingStage: null,
+      saved: null,
+      saveState: "idle",
+      saveToAccount: async (silent) => {
+        const { identity, input, contact, invoice, saved } = get();
+        if (!identity) return false;
+        set({ saveState: "saving" });
+        try {
+          const { saveDesignRemote } = await import("@/components/account/account-client");
+          const d = await saveDesignRemote({ id: saved?.id, title: identity.metadata.brandName || "هوية", kind: "identity", data: { v: 1, input, identity, contact, invoice } });
+          set({ saved: { id: d.id, expiresAt: d.expiresAt, at: Date.now() }, saveState: "idle" });
+          return true;
+        } catch (e) {
+          set({ saveState: "error", ...(silent ? {} : { notice: { kind: "error" as const, text: (e as Error).message } }) });
+          return false;
+        }
+      },
+      loadSaved: async (id) => {
+        const { loadDesignRemote } = await import("@/components/account/account-client");
+        const d = await loadDesignRemote<{ input: IntakeInput; identity: BrandIdentity; contact: ContactInfo; invoice: InvoiceData }>(id);
+        set({ input: d.data.input, identity: d.data.identity, contact: d.data.contact, invoice: d.data.invoice, saved: { id: d.id, expiresAt: d.expiresAt, at: Date.now() }, stage: "studio", tab: "strategy", notice: null });
+      },
       aiBusy: false,
       moreAiLogos: async () => {
         const { identity, input } = get();
@@ -198,7 +224,7 @@ export const useBrand = create<BrandState>()(
         await new Promise((r) => setTimeout(r, wait));
         const prev = get().contact;
         const contact = prev.email.startsWith("info@brand") || !get().identity ? defaultContact(input) : prev;
-        set({ identity, contact, loading: false, loadingStage: null, notice: notice ?? aiNotice, validationNotes: notes, stage: "studio", tab: "strategy" });
+        set({ saved: null, identity, contact, loading: false, loadingStage: null, notice: notice ?? aiNotice, validationNotes: notes, stage: "studio", tab: "strategy" });
       },
 
       regenerateConcepts: () => {
@@ -255,7 +281,7 @@ export const useBrand = create<BrandState>()(
     }),
     {
       name: "brandforge-v1",
-      partialize: (s) => ({ stage: s.stage, tab: s.tab, input: s.input, identity: s.identity, contact: s.contact, invoice: s.invoice, showGuides: s.showGuides }),
+      partialize: (s) => ({ stage: s.stage, tab: s.tab, input: s.input, identity: s.identity, contact: s.contact, invoice: s.invoice, showGuides: s.showGuides, saved: s.saved }),
     },
   ),
 );
