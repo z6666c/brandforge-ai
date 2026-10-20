@@ -102,7 +102,7 @@ function readme(identity: BrandIdentity) {
   const p = identity.palette;
   const row = (k: string, s: { hex: string; cmyk: string; pantone?: string }) => `- ${k}: ${s.hex} | ${rgbString(s.hex)} | ${s.cmyk}${s.pantone ? ` | ${s.pantone}` : ""}`;
   return `حزمة الهوية البصرية — ${identity.metadata.brandName}
-أُنشئت بواسطة BrandForge AI بتاريخ ${new Date().toLocaleDateString("ar-SA")}
+أُنشئت بواسطة BrandForge AI بتاريخ ${new Date().toLocaleDateString("ar-SA-u-nu-latn")}
 
 المحتويات:
 01-logos/svg   ملفات الشعار المتجهية (أفقي، عمودي، أحادي، معكوس، الأيقونة، Favicon، النمط الزخرفي)

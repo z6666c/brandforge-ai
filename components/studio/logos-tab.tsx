@@ -138,8 +138,8 @@ export function LogosTab() {
           }
         />
         <p className="-mt-2 mb-4 text-[13px] text-muted">
-          {aiCount > 0 && <>رسم الذكاء الاصطناعي <b className="text-ink">{aiCount.toLocaleString("ar-SA")}</b> شعاراً من اسمك ونشاطك واختياراتك. </>}
-          ويضيف المحرك بدائل فورية — <b className="text-ink">{space.toLocaleString("ar-SA")}</b> تركيبة ممكنة لعلامتك بلا تكرار.
+          {aiCount > 0 && <>رسم الذكاء الاصطناعي <b className="text-ink">{aiCount.toLocaleString("ar-SA-u-nu-latn")}</b> شعاراً من اسمك ونشاطك واختياراتك. </>}
+          ويضيف المحرك بدائل فورية — <b className="text-ink">{space.toLocaleString("ar-SA-u-nu-latn")}</b> تركيبة ممكنة لعلامتك بلا تكرار.
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {identity.concepts.map((_, i) => <ConceptCard key={identity.concepts[i].id + i} i={i} />)}
