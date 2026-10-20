@@ -107,7 +107,7 @@ interface BrandState {
 }
 
 /** شعارات يرسمها الذكاء الاصطناعي مباشرة (Recraft أو Gemini) */
-export async function fetchAILogos(input: IntakeInput, palette: Palette, count = 4): Promise<{ concepts: LogoConcept[]; error?: string }> {
+export async function fetchAILogos(input: IntakeInput, palette: Palette, count = 4): Promise<{ concepts: LogoConcept[]; error?: string; note?: string }> {
   if (process.env.NEXT_PUBLIC_BRANDFORGE_DEMO === "1") return { concepts: [], error: "PREVIEW" };
   try {
     const res = await fetch("/api/brand/ai-logos", {
@@ -116,7 +116,7 @@ export async function fetchAILogos(input: IntakeInput, palette: Palette, count =
     });
     const d = await res.json().catch(() => ({}));
     if (!res.ok) return { concepts: [], error: res.status === 501 ? "NO_KEY" : d.error ?? String(res.status) };
-    return { concepts: (d.concepts ?? []) as LogoConcept[] };
+    return { concepts: (d.concepts ?? []) as LogoConcept[], note: d.note };
   } catch {
     return { concepts: [], error: "تعذر الاتصال بمولّد الشعارات" };
   }
@@ -196,7 +196,7 @@ export const useBrand = create<BrandState>()(
         set({ aiBusy: true });
         const ai = await fetchAILogos(input, identity.palette, 4);
         const cur = get().identity;
-        if (ai.concepts.length && cur) set({ identity: { ...cur, concepts: [...ai.concepts, ...cur.concepts].slice(0, 48), selectedConcept: 0 }, aiBusy: false });
+        if (ai.concepts.length && cur) set({ identity: { ...cur, concepts: [...ai.concepts, ...cur.concepts].slice(0, 48), selectedConcept: 0 }, aiBusy: false, ...(ai.note ? { notice: { kind: "info" as const, text: ai.note } } : {}) });
         else set({ aiBusy: false, notice: { kind: ai.error === "NO_KEY" ? "info" : "warn", text: ai.error === "NO_KEY" ? "الرسم بالذكاء الاصطناعي يحتاج RECRAFT_API_KEY أو GEMINI_API_KEY في إعدادات الخادم." : ai.error === "PREVIEW" ? "الرسم بالذكاء الاصطناعي يعمل في الموقع المنشور فقط، وليس في المعاينة." : `تعذر الرسم بالذكاء الاصطناعي: ${ai.error}` } });
       },
 
@@ -217,7 +217,10 @@ export const useBrand = create<BrandState>()(
         if (input.aiDirect !== false) {
           set({ loadingStage: "ai-logos" });
           const ai = await fetchAILogos(input, identity.palette, 4);
-          if (ai.concepts.length) identity = { ...identity, concepts: [...ai.concepts, ...identity.concepts], selectedConcept: 0 };
+          if (ai.concepts.length) {
+            identity = { ...identity, concepts: [...ai.concepts, ...identity.concepts], selectedConcept: 0 };
+            if (ai.note) aiNotice = { kind: "info", text: ai.note };
+          }
           else if (ai.error && ai.error !== "PREVIEW" && ai.error !== "NO_KEY") aiNotice = { kind: "warn", text: `تعذر رسم الشعارات بالذكاء الاصطناعي الآن (${ai.error})؛ عرضنا شعارات المحرك.` };
         }
         const wait = Math.max(0, 2200 - (Date.now() - started)); // يمنح شاشة التحميل وقتاً لعرض المراحل
