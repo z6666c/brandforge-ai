@@ -60,8 +60,9 @@ export async function exportPdf(job: PdfJobId) {
   downloadBlob(new Blob([bytes as BlobPart], { type: "application/pdf" }), `${slugName(identity)}_${file}`);
 }
 
-export async function exportPackage(): Promise<string[]> {
-  if (!(await paidGate("لتحميل حزمة الهوية الكاملة."))) return [];
+/** يعيد null إذا ما تم التحميل (لم يدفع بعد) */
+export async function exportPackage(): Promise<string[] | null> {
+  if (!(await paidGate("لتحميل حزمة الهوية الكاملة."))) return null;
   const { identity, contact, invoice } = useBrand.getState();
   if (!identity) return [];
   const res = await withStage("تجهيز الحزمة الكاملة", (getNode) =>

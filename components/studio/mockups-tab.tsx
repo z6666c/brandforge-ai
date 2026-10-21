@@ -20,6 +20,7 @@ export function MockupsTab() {
     setBusy(true);
     try {
       const warnings = await exportPackage();
+      if (!warnings) return; // نافذة الدفع ظهرت بدل التحميل
       setNotice({ kind: warnings.length ? "warn" : "info", text: warnings.length ? `اكتمل التنزيل مع ملاحظات: ${warnings.join("، ")}` : "اكتمل تجهيز الحزمة الكاملة وتنزيلها." });
     } catch (e) {
       console.error(e);

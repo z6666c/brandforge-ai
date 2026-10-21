@@ -74,7 +74,7 @@ export function Studio() {
     setBusy(true);
     try {
       const w = await exportPackage();
-      if (w.length) setNotice({ kind: "warn", text: w.join("، ") });
+      if (w?.length) setNotice({ kind: "warn", text: w.join("، ") });
     } catch (e) {
       setNotice({ kind: "error", text: "تعذر تجهيز الحزمة: " + (e as Error).message });
     } finally {
