@@ -1,0 +1,18 @@
+{
+  "appId": "sa.hawiyat.app",
+  "appName": "الهويات",
+  "webDir": "www",
+  "backgroundColor": "#16181d",
+  "appendUserAgent": "HawiyatApp/1.0",
+  "server": {
+    "url": "https://brandforge-ai.vercel.app",
+    "allowNavigation": ["brandforge-ai.vercel.app"],
+    "errorPath": "offline.html"
+  },
+  "ios": { "contentInset": "automatic", "scheme": "HawiyatApp" },
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "launchAutoHide": true, "backgroundColor": "#16181d", "showSpinner": false },
+    "StatusBar": { "overlaysWebView": false, "backgroundColor": "#16181d", "style": "DARK" }
+  }
+}
