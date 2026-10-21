@@ -2,7 +2,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, readToken, publicDemo } from "@/lib/auth";
 
-const PUBLIC = [/^\/login$/, /^\/api\/auth\//, /^\/api\/account\//, /^\/api\/pay\//];
+const PUBLIC = [/^\/login$/, /^\/api\/auth\//, /^\/api\/account\//, /^\/api\/pay\//, /^\/(privacy|terms|delete-account)$/];
 
 export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;

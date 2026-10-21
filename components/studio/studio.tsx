@@ -1,4 +1,5 @@
 "use client";
+import { storeApp } from "@/lib/native";
 import { daysLeft, ensureAccount, useAccount, useEntitled, usePlans } from "../account/account-client";
 import { Watermark, PreviewBadge } from "../account/watermark";
 import { paidGate } from "./paid-gate";
@@ -125,7 +126,7 @@ export function Studio() {
         </div>
         <div className="relative mx-auto max-w-6xl px-5 py-7">
           <Watermark show={!paid} text="معاينة · BrandForge" />
-          <PreviewBadge show={!paid} label={`التحميل بعد الدفع: ${PLANS.once.price} ${PLANS.once.currency} مرة واحدة أو ${PLANS.monthly.price} شهرياً`} onUnlock={() => { paidGate("لتحميل ملفات هويتك."); }} />
+          <PreviewBadge show={!paid} label={storeApp() ? "نسخة معاينة بعلامة مائية" : `التحميل بعد الدفع: ${PLANS.once.price} ${PLANS.once.currency} مرة واحدة أو ${PLANS.monthly.price} شهرياً`} onUnlock={() => { paidGate("لتحميل ملفات هويتك."); }} />
           <NoticeBar />
           <AnimatePresence mode="wait">
             <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>

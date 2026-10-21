@@ -1,5 +1,5 @@
-import { sessionFromRequest, GUEST } from "@/lib/auth";
-import { DRAFT_DAYS, getCustomer, listDesigns } from "@/lib/customers";
+import { sessionFromRequest, GUEST, SESSION_COOKIE, cookieOptions } from "@/lib/auth";
+import { DRAFT_DAYS, deleteCustomer, getCustomer, getDesign, listDesigns } from "@/lib/customers";
 import { kvAvailable, kvKind } from "@/lib/kv";
 import { canSend } from "@/lib/otp";
 import { json } from "@/lib/api-guard";
@@ -18,5 +18,17 @@ export async function GET(req: Request) {
     const c = await getCustomer(s.u);
     if (c) return json({ role: "customer", customer: c, designs: await listDesigns(c.id), signup, prices, pay, gateway });
   }
-  return json({ role: s?.r ?? null, guest: s?.u === GUEST, username: s?.r === "customer" ? undefined : s?.u, signup, prices, pay, gateway });
+  return json({ role: s?.r === "customer" ? null : s?.r ?? null, guest: s?.u === GUEST, username: s?.r === "customer" ? undefined : s?.u, signup, prices, pay, gateway });
+}
+
+/** حذف حساب العميل وكل تصاميمه نهائياً (شرط متاجر التطبيقات) */
+export async function DELETE(req: Request) {
+  const s = await sessionFromRequest(req);
+  if (s?.r !== "customer" || !kvAvailable()) return json({ error: "سجّل دخولك أولاً" }, 401);
+  const c = await getCustomer(s.u);
+  if (!c) return json({ error: "الحساب غير موجود" }, 404);
+  await deleteCustomer(c.id);
+  const res = json({ ok: true });
+  res.cookies.set(SESSION_COOKIE, "", { ...cookieOptions, maxAge: 0 });
+  return res;
 }
