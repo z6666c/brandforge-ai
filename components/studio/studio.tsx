@@ -1,8 +1,7 @@
 "use client";
-import { daysLeft, ensureAccount, useAccount, useEntitled } from "../account/account-client";
+import { daysLeft, ensureAccount, useAccount, useEntitled, usePlans } from "../account/account-client";
 import { Watermark, PreviewBadge } from "../account/watermark";
 import { paidGate } from "./paid-gate";
-import { PLANS } from "@/lib/plans";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, FileArchive, Info, TriangleAlert, X, Layers, PenTool, Printer, Box, Save, SlidersHorizontal } from "lucide-react";
@@ -56,6 +55,7 @@ export function Studio() {
   const { me } = useAccount();
   const customer = me?.role === "customer";
   const paid = useEntitled(saved?.id);
+  const PLANS = usePlans();
 
   // حفظ تلقائي بعد كل تعديل (للعميل المسجّل الذي حفظ التصميم مرة)
   React.useEffect(() => {

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SESSION_COOKIE, readToken } from "@/lib/auth";
 import { kvAvailable, kvMemory } from "@/lib/kv";
 import { checkStaff } from "@/lib/api-guard";
+import { effectivePerms, getMember } from "@/lib/team";
 import { settingsRows } from "@/lib/admin-settings";
 import { compositionSpace, totalSpace } from "@/lib/logo";
 import { readName } from "@/lib/logo/name-families";
@@ -14,7 +15,8 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const s = await readToken((await cookies()).get(SESSION_COOKIE)?.value);
   if (await checkStaff(s, "read")) redirect("/login?next=/admin");
-  const me = { username: s!.u, owner: !s!.m, level: s!.m ? (s!.lv ?? "viewer") : ("owner" as const) };
+  const member = s!.m ? await getMember(s!.u) : null;
+  const me = { username: s!.u, owner: !s!.m, level: member ? member.level : ("owner" as const), perms: member ? effectivePerms(member) : [] };
   const settings = [
     ...settingsRows(),
     { label: "محرك الشعارات — تركيبات علامة نموذجية", value: compositionSpace(readName("زهرة", undefined, "beauty")).toLocaleString("ar-SA-u-nu-latn") },
