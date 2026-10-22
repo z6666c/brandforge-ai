@@ -68,7 +68,7 @@ export function Studio() {
 
   const saveNow = async () => {
     if (!(await ensureAccount("لحفظ هويتك والرجوع لها لاحقاً."))) return;
-    if (await save()) setNotice({ kind: "info", text: paid ? "تم الحفظ في حسابك." : `تم حفظ المسودة في حسابك — أكمل الشراء خلال ${daysLeft(useBrand.getState().saved?.expiresAt) ?? 7} أيام لتحميل الملفات.` });
+    if (await save()) setNotice({ kind: "info", text: paid ? "تم الحفظ في حسابك." : storeApp() ? "تم حفظ المسودة في حسابك." : `تم حفظ المسودة في حسابك — أكمل الشراء خلال ${daysLeft(useBrand.getState().saved?.expiresAt) ?? 7} أيام لتحميل الملفات.` });
   };
 
   const zip = async () => {
@@ -126,7 +126,7 @@ export function Studio() {
         </div>
         <div className="relative mx-auto max-w-6xl px-5 py-7">
           <Watermark show={!paid} text="معاينة · BrandForge" />
-          <PreviewBadge show={!paid} label={storeApp() ? "نسخة معاينة بعلامة مائية" : `التحميل بعد الدفع: ${PLANS.once.price} ${PLANS.once.currency} مرة واحدة أو ${PLANS.monthly.price} شهرياً`} onUnlock={() => { paidGate("لتحميل ملفات هويتك."); }} />
+          <PreviewBadge show={!paid && !storeApp()} label={storeApp() ? "نسخة معاينة بعلامة مائية" : `التحميل بعد الدفع: ${PLANS.once.price} ${PLANS.once.currency} مرة واحدة أو ${PLANS.monthly.price} شهرياً`} onUnlock={() => { paidGate("لتحميل ملفات هويتك."); }} />
           <NoticeBar />
           <AnimatePresence mode="wait">
             <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.22 }}>

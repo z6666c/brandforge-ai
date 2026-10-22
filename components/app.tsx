@@ -1,6 +1,7 @@
 "use client";
 import { AccountModals } from "./account/account-modals";
 import { AccountBar, DemoNotice } from "./account-bar";
+import { storeApp } from "@/lib/native";
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useBrand } from "@/store/brand-store";
@@ -79,7 +80,7 @@ export default function BrandForgeApp() {
           <div className="mr-auto"><AccountBar /></div>
         </div>
       </header>
-      <DemoNotice text="أنت في الديمو: المعاينة مجانية بعلامة مائية، والتحميل بعد اختيار الباقة." />
+      <DemoNotice text={storeApp() ? "أنت في وضع التجربة: صمّم وعاين بحرية، وسجّل لحفظ تصاميمك." : "أنت في الديمو: المعاينة مجانية بعلامة مائية، والتحميل بعد اختيار الباقة."} />
       {mounted && (
         <AnimatePresence mode="wait">
           {showStudio ? (
